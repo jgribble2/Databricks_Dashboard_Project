@@ -1,0 +1,37 @@
+WITH state_emissions AS (
+  SELECT
+    state_abbr AS state,
+    SUM(CAST(REPLACE(`GHG emissions mtons CO2e`, ',', '') AS DOUBLE)) AS total_emissions
+  FROM
+    emissions_data
+  GROUP BY
+    state
+),
+total_us AS (
+  SELECT
+    SUM(total_emissions) AS total_us_emissions
+  FROM
+    state_emissions
+),
+top_ten AS (
+  SELECT
+    state,
+    total_emissions
+  FROM
+    state_emissions
+  ORDER BY
+    total_emissions DESC
+  LIMIT 10
+),
+top_ten_sum AS (
+  SELECT
+    SUM(total_emissions) AS top_ten_emissions
+  FROM
+    top_ten
+)
+SELECT
+  ROUND(100 * top_ten_sum.top_ten_emissions / total_us.total_us_emissions, 2) AS percent_of_us_total
+FROM
+  top_ten_sum
+CROSS JOIN
+  total_us;
